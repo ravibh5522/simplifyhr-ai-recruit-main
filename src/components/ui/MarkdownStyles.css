@@ -1,0 +1,43 @@
+/* src/components/ui/MarkdownStyles.css */
+
+/* This is a basic set of styles. You can customize these to match your app's theme. */
+
+.markdown-container {
+  font-family: inherit; /* Use the parent font */
+  line-height: 1.6;
+  color: hsl(var(--foreground)); /* Use your theme's text color */
+}
+
+.markdown-container h2 {
+  font-size: 1.25rem; /* Larger font size for headings */
+  font-weight: 600; /* Bold headings */
+  margin-top: 1.5rem; /* Space above headings */
+  margin-bottom: 0.75rem; /* Space below headings */
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border)); /* A subtle line under headings */
+}
+
+.markdown-container h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-container p {
+  margin-bottom: 1rem; /* Space between paragraphs */
+}
+
+.markdown-container ul {
+  list-style-type: disc; /* Standard bullet points */
+  padding-left: 1.5rem; /* Indent lists */
+  margin-bottom: 1rem;
+}
+
+.markdown-container li {
+  margin-bottom: 0.25rem; /* Space between list items */
+}
+
+.markdown-container strong {
+  font-weight: 600; /* Bolder text for emphasis */
+}
