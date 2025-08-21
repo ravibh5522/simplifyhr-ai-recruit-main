@@ -68,59 +68,7 @@ const RecruitmentAnalytics = () => {
       const applications = applicationsQuery.data || [];
       const interviews = interviewsQuery.data || [];
 
-      // If no data available, use placeholder metrics
-      if (jobs.length === 0 && applications.length === 0 && interviews.length === 0) {
-        const placeholderMetrics: RecruitmentMetrics = {
-          totalJobs: 12,
-          activeJobs: 8,
-          totalApplications: 145,
-          hiredCandidates: 18,
-          averageTimeToHire: 14,
-          averageCostPerHire: 2500000, // IDR 2.5M
-          conversionRate: 12.4,
-          pendingInterviews: 6
-        };
-        
-        setMetrics(placeholderMetrics);
-        
-        // Generate placeholder time series data
-        const placeholderTimeSeries: TimeSeriesData[] = [];
-        for (let i = 29; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split('T')[0];
-          
-          placeholderTimeSeries.push({
-            date: dateStr,
-            applications: Math.floor(Math.random() * 10) + 2,
-            hires: Math.floor(Math.random() * 3) + 1,
-            interviews: Math.floor(Math.random() * 5) + 1
-          });
-        }
-        setTimeSeriesData(placeholderTimeSeries);
-        
-        // Placeholder job status data
-        const placeholderJobStatus: JobStatusData[] = [
-          { status: 'Published', count: 8, percentage: 66.7 },
-          { status: 'Draft', count: 3, percentage: 25.0 },
-          { status: 'Closed', count: 1, percentage: 8.3 }
-        ];
-        setJobStatusData(placeholderJobStatus);
-        
-        // Placeholder application status data
-        const placeholderAppStatus: ApplicationStatusData[] = [
-          { status: 'Under Review', count: 58, percentage: 40.0 },
-          { status: 'Interviewed', count: 35, percentage: 24.1 },
-          { status: 'Hired', count: 18, percentage: 12.4 },
-          { status: 'Rejected', count: 34, percentage: 23.5 }
-        ];
-        setApplicationStatusData(placeholderAppStatus);
-        
-        setLoading(false);
-        return;
-      }
-
-      // Calculate metrics with real data
+      // Calculate metrics
       const totalJobs = jobs.length;
       const activeJobs = jobs.filter((job: any) => job.status === 'published').length;
       const totalApplications = applications.length;

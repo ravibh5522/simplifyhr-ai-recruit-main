@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMEA Digital Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .header p {
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .last-updated {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .tabs {
+            border-bottom: 1px solid #e5e7eb;
+            margin: 24px 0;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .tab-button {
+            padding: 16px 4px;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .tab-button:hover {
+            border-bottom-color: #d1d5db;
+        }
+
+        .tab-button.active {
+            border-bottom-color: #dc143c;
+        }
+
+        .tab-button.active .tab-label {
+            color: #dc143c;
+        }
+
+        .tab-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .tab-desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+            max-width: 300px;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-key {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: capitalize;
+        }
+
+        .filter-value {
+            padding: 4px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .clear-filters {
+            font-size: 12px;
+            color: #dc143c;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .clear-filters:hover {
+            color: #8b0000;
+        }
+
+        .kpi-grid {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            min-width: 200px;
+            flex-shrink: 0;
+        }
+
+        .kpi-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .kpi-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .kpi-change {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .kpi-change.positive {
+            color: #059669;
+        }
+
+        .kpi-change.negative {
+            color: #dc2626;
+        }
+
+        .kpi-icon {
+            width: 32px;
+            height: 32px;
+            color: #9ca3af;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .metric-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .metric-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        select {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            height: 400px;
+            margin-bottom: 16px;
+        }
+
+        .canvas-wrapper-small {
+            position: relative;
+            height: 300px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-line {
+            width: 16px;
+            height: 2px;
+        }
+
+        .legend-line.dashed {
+            border-top: 2px dashed;
+            height: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #f3f4f6;
+        }
+
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 4px;
+            color: #9ca3af;
+        }
+
+        td {
+            padding: 12px;
+            font-size: 14px;
+            color: #111827;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: #d1fae5;
+            color: #064e3b;
+        }
+
+        .status-paused {
+            background: #fef3c7;
+            color: #78350f;
+        }
+
+        .pacing-value {
+            font-weight: 500;
+        }
+
+        .pacing-good {
+            color: #059669;
+        }
+
+        .pacing-warning {
+            color: #d97706;
+        }
+
+        .pacing-bad {
+            color: #dc2626;
+        }
+
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .note-box {
+            margin-top: 32px;
+            padding: 16px;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+        }
+
+        .note-box p {
+            font-size: 14px;
+            color: #78350f;
+        }
+
+        .note-box strong {
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>EMEA Digital Dashboard Redesign</h1>
+                    <p>Upper – Mid – Lower funnel tabs</p>
+                </div>
+                <div class="last-updated">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Last updated: Today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tabs-nav">
+                <button class="tab-button active" onclick="switchTab('upper')">
+                    <div class="tab-label">Upper Funnel</div>
+                    <div class="tab-desc">ThruPlay + CP CompletedView</div>
+                </button>
+                <button class="tab-button" onclick="switchTab('mid')">
+                    <div class="tab-label">Mid Funnel</div>
+                    <div class="tab-desc">Landing page views + CPLPV, Content views + CPV, Engagements + CPE, Leads + CPL</div>
+                </button>
+                <button class="tab-button" onclick="switchTab('lower')">
+                    <div class="tab-label">Lower Funnel</div>
+                    <div class="tab-desc">A2C + CPA2C, Purchases + CP Purchase, Revenue, ROAS</div>
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-content">
+                <div class="filter-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filters:</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-key">date:</span>
+                    <span class="filter-value">2024</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-key">currency:</span>
+                    <span class="filter-value">EUR</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-key">brand:</span>
+                    <span class="filter-value">All Brands</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-key">market:</span>
+                    <span class="filter-value">EMEA</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-key">funnelStage:</span>
+                    <span class="filter-value">All Stages</span>
+                </div>
+                <button class="clear-filters">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Upper Funnel Tab -->
+        <div id="upper-tab" class="tab-content active">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Total Spend</div>
+                            <div class="kpi-value">€2.1M</div>
+                            <div class="kpi-change positive">+12% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Impressions</div>
+                            <div class="kpi-value">28.5M</div>
+                            <div class="kpi-change positive">+8% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">CPM</div>
+                            <div class="kpi-value">€18.50</div>
+                            <div class="kpi-change negative">-5% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">ThruPlay %</div>
+                            <div class="kpi-value">67%</div>
+                            <div class="kpi-change positive">+3% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Completed View %</div>
+                            <div class="kpi-value">44%</div>
+                            <div class="kpi-change negative">-2% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Upper Funnel Performance Trends</h3>
+                    <div class="control-group">
+                        <span>Period:</span>
+                        <select id="upper-period-select" onchange="updateUpperChart()">
+                            <option value="months">Monthly</option>
+                            <option value="weeks">Weekly</option>
+                            <option value="days">Daily</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="metric-selectors">
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #DC143C;"></div>
+                            <span>Primary Metric</span>
+                        </div>
+                        <select id="upper-metric1-select" onchange="updateUpperChart()">
+                            <option value="spend">Spend</option>
+                            <option value="impressions">Impressions</option>
+                            <option value="clicks">Clicks</option>
+                            <option value="cpm">CPM</option>
+                            <option value="ctr">CTR</option>
+                            <option value="thruplay">ThruPlay %</option>
+                            <option value="completedView">Completed View %</option>
+                        </select>
+                        <select id="upper-chart1-type" onchange="updateUpperChart()">
+                            <option value="bar">Bar Chart</option>
+                            <option value="line">Line Chart</option>
+                        </select>
+                    </div>
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #2563EB;"></div>
+                            <span>Secondary Metric</span>
+                        </div>
+                        <select id="upper-metric2-select" onchange="updateUpperChart()">
+                            <option value="impressions">Impressions</option>
+                            <option value="spend">Spend</option>
+                            <option value="clicks">Clicks</option>
+                            <option value="cpm">CPM</option>
+                            <option value="ctr">CTR</option>
+                            <option value="thruplay">ThruPlay %</option>
+                            <option value="completedView">Completed View %</option>
+                        </select>
+                        <select id="upper-chart2-type" onchange="updateUpperChart()">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="upper-trend-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">Budget Pacing</h3>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="upper-pacing-chart"></canvas>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-line dashed" style="border-color: #6B7280;"></div>
+                                <span>Planned</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-line" style="background: #DC143C;"></div>
+                                <span>Actual</span>
+                            </div>
+                        </div>
+                        <span style="font-size: 11px;">Current pacing vs planned</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Performance Distribution</h3>
+                        <div class="control-group">
+                            <span>Break down by:</span>
+                            <select id="upper-distribution-select" onchange="updateUpperDistribution()">
+                                <option value="platform">Platform</option>
+                                <option value="objective">Objective</option>
+                                <option value="market">Market</option>
+                                <option value="campaign">Campaign</option>
+                                <option value="deviceType">Device Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="upper-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Campaign Delivery Overview</h3>
+                    <select id="upper-table-view" onchange="updateUpperTable()">
+                        <option value="default">Default View</option>
+                        <option value="budget">Budget Focus</option>
+                        <option value="performance">Performance Focus</option>
+                        <option value="all">All Columns</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="upper-delivery-table">
+                        <thead id="upper-table-head"></thead>
+                        <tbody id="upper-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <div>Showing 4 campaigns</div>
+                    <div>Click column headers to sort • Use dropdown to customize view</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mid Funnel Tab -->
+        <div id="mid-tab" class="tab-content">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Landing Page Views</div>
+                            <div class="kpi-value">1.2M</div>
+                            <div class="kpi-change positive">+15% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Content Views</div>
+                            <div class="kpi-value">890K</div>
+                            <div class="kpi-change positive">+7% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Engagements</div>
+                            <div class="kpi-value">156K</div>
+                            <div class="kpi-change positive">+22% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18m-9-9v18"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">CPE</div>
+                            <div class="kpi-value">€3.20</div>
+                            <div class="kpi-change negative">-8% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Leads</div>
+                            <div class="kpi-value">2.8K</div>
+                            <div class="kpi-change positive">+18% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Mid Funnel Performance Trends</h3>
+                    <div class="control-group">
+                        <span>Period:</span>
+                        <select id="mid-period-select" onchange="updateMidChart()">
+                            <option value="months">Monthly</option>
+                            <option value="weeks">Weekly</option>
+                            <option value="days">Daily</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="metric-selectors">
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #DC143C;"></div>
+                            <span>Primary Metric</span>
+                        </div>
+                        <select id="mid-metric1-select" onchange="updateMidChart()">
+                            <option value="landingViews">Landing Page Views</option>
+                            <option value="contentViews">Content Views</option>
+                            <option value="engagements">Engagements</option>
+                            <option value="cpe">CPE</option>
+                            <option value="leads">Leads</option>
+                            <option value="cpl">CPL</option>
+                        </select>
+                    </div>
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #2563EB;"></div>
+                            <span>Secondary Metric</span>
+                        </div>
+                        <select id="mid-metric2-select" onchange="updateMidChart()">
+                            <option value="contentViews">Content Views</option>
+                            <option value="landingViews">Landing Page Views</option>
+                            <option value="engagements">Engagements</option>
+                            <option value="cpe">CPE</option>
+                            <option value="leads">Leads</option>
+                            <option value="cpl">CPL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="mid-trend-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">Lead Generation Pacing</h3>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="mid-pacing-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Mid-Funnel Distribution</h3>
+                        <div class="control-group">
+                            <span>Break down by:</span>
+                            <select id="mid-distribution-select" onchange="updateMidDistribution()">
+                                <option value="platform">Platform</option>
+                                <option value="objective">Objective</option>
+                                <option value="market">Market</option>
+                                <option value="campaign">Campaign</option>
+                                <option value="deviceType">Device Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="mid-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">Mid-Funnel Campaign Performance</h3>
+                <div class="table-wrapper">
+                    <table id="mid-delivery-table">
+                        <thead id="mid-table-head"></thead>
+                        <tbody id="mid-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lower Funnel Tab -->
+        <div id="lower-tab" class="tab-content">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">A2C</div>
+                            <div class="kpi-value">950</div>
+                            <div class="kpi-change positive">+25% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">CPA2C</div>
+                            <div class="kpi-value">€48</div>
+                            <div class="kpi-change negative">-12% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Purchases</div>
+                            <div class="kpi-value">385</div>
+                            <div class="kpi-change positive">+32% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">Revenue</div>
+                            <div class="kpi-value">€142K</div>
+                            <div class="kpi-change positive">+28% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-content">
+                        <div>
+                            <div class="kpi-title">ROAS</div>
+                            <div class="kpi-value">4.2x</div>
+                            <div class="kpi-change positive">+15% vs last month</div>
+                        </div>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Lower Funnel Performance Trends</h3>
+                    <div class="control-group">
+                        <span>Period:</span>
+                        <select id="lower-period-select" onchange="updateLowerChart()">
+                            <option value="months">Monthly</option>
+                            <option value="weeks">Weekly</option>
+                            <option value="days">Daily</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="metric-selectors">
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #DC143C;"></div>
+                            <span>Primary Metric</span>
+                        </div>
+                        <select id="lower-metric1-select" onchange="updateLowerChart()">
+                            <option value="a2c">A2C</option>
+                            <option value="cpa2c">CPA2C</option>
+                            <option value="purchases">Purchases</option>
+                            <option value="revenue">Revenue</option>
+                            <option value="roas">ROAS</option>
+                        </select>
+                    </div>
+                    <div class="metric-group">
+                        <div class="metric-label">
+                            <div class="color-indicator" style="background: #2563EB;"></div>
+                            <span>Secondary Metric</span>
+                        </div>
+                        <select id="lower-metric2-select" onchange="updateLowerChart()">
+                            <option value="cpa2c">CPA2C</option>
+                            <option value="a2c">A2C</option>
+                            <option value="purchases">Purchases</option>
+                            <option value="revenue">Revenue</option>
+                            <option value="roas">ROAS</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="lower-trend-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">Revenue Pacing vs Target</h3>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="lower-pacing-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Conversion Distribution</h3>
+                        <div class="control-group">
+                            <span>Break down by:</span>
+                            <select id="lower-distribution-select" onchange="updateLowerDistribution()">
+                                <option value="platform">Platform</option>
+                                <option value="objective">Objective</option>
+                                <option value="market">Market</option>
+                                <option value="campaign">Campaign</option>
+                                <option value="deviceType">Device Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper-small">
+                        <canvas id="lower-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">Lower Funnel Campaign Performance</h3>
+                <div class="table-wrapper">
+                    <table id="lower-delivery-table">
+                        <thead id="lower-table-head"></thead>
+                        <tbody id="lower-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="note-box">
+            <p>
+                <strong>Note:</strong> Need to validate metric allocations with Media teams. 
+                This dashboard mirrors the Paid Media Overview summary and allows drilling down by funnel stage 
+                to focus on objective-specific metrics for operational users seeking performance insights across time and platforms.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let charts = {};
+        let currentTab = 'upper';
+        let sortField = 'campaign';
+        let sortDirection = 'asc';
+
+        // Data generation functions
+        function generateTrendData(baseValue, variance, periods) {
+            let timePoints;
+            switch (periods) {
+                case 'weeks':
+                    timePoints = Array.from({ length: 12 }, (_, i) => `Week ${i + 1}`);
+                    break;
+                case 'days':
+                    timePoints = Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
+                    break;
+                default:
+                    timePoints = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            }
+            
+            return timePoints.map(period => ({
+                period,
+                spend: Math.round(baseValue * (1 + (Math.random() - 0.5) * variance)),
+                impressions: Math.round((baseValue * 50) * (1 + (Math.random() - 0.5) * variance)),
+                clicks: Math.round((baseValue * 0.4) * (1 + (Math.random() - 0.5) * variance)),
+                cpm: Number((20 * (1 + (Math.random() - 0.5) * 0.3)).toFixed(2)),
+                ctr: Number((0.8 * (1 + (Math.random() - 0.5) * 0.4)).toFixed(2)),
+                thruplay: Number((65 * (1 + (Math.random() - 0.5) * 0.2)).toFixed(1)),
+                completedView: Number((42 * (1 + (Math.random() - 0.5) * 0.3)).toFixed(1)),
+                landingViews: Math.round((baseValue * 2.5) * (1 + (Math.random() - 0.5) * variance)),
+                contentViews: Math.round((baseValue * 1.7) * (1 + (Math.random() - 0.5) * variance)),
+                engagements: Math.round((baseValue * 0.3) * (1 + (Math.random() - 0.5) * variance)),
+                cpe: Number((3.2 * (1 + (Math.random() - 0.5) * 0.4)).toFixed(2)),
+                leads: Math.round((baseValue * 0.05) * (1 + (Math.random() - 0.5) * variance)),
+                cpl: Number((45 * (1 + (Math.random() - 0.5) * 0.3)).toFixed(2)),
+                a2c: Math.round((baseValue * 0.017) * (1 + (Math.random() - 0.5) * variance)),
+                cpa2c: Number((48 * (1 + (Math.random() - 0.5) * 0.3)).toFixed(2)),
+                purchases: Math.round((baseValue * 0.0064) * (1 + (Math.random() - 0.5) * variance)),
+                revenue: Math.round((baseValue * 2.5) * (1 + (Math.random() - 0.5) * variance)),
+                roas: Number((3.8 * (1 + (Math.random() - 0.5) * 0.2)).toFixed(1))
+            }));
+        }
+
+        function generateDistributionData(dimension) {
+            const data = {
+                platform: [
+                    { name: 'Google Ads', value: 45, color: '#DC143C' },
+                    { name: 'Facebook', value: 30, color: '#8B0000' },
+                    { name: 'LinkedIn', value: 15, color: '#FF6B6B' },
+                    { name: 'Twitter', value: 10, color: '#6B7280' }
+                ],
+                objective: [
+                    { name: 'Brand Awareness', value: 35, color: '#DC143C' },
+                    { name: 'Lead Generation', value: 25, color: '#8B0000' },
+                    { name: 'Conversions', value: 20, color: '#FF6B6B' },
+                    { name: 'Traffic', value: 20, color: '#6B7280' }
+                ],
+                market: [
+                    { name: 'UK', value: 40, color: '#DC143C' },
+                    { name: 'Germany', value: 25, color: '#8B0000' },
+                    { name: 'France', value: 20, color: '#FF6B6B' },
+                    { name: 'Other', value: 15, color: '#6B7280' }
+                ],
+                campaign: [
+                    { name: 'Q4 Brand Push', value: 30, color: '#DC143C' },
+                    { name: 'Product Launch', value: 25, color: '#8B0000' },
+                    { name: 'Retargeting', value: 25, color: '#FF6B6B' },
+                    { name: 'Lead Gen EU', value: 20, color: '#6B7280' }
+                ],
+                deviceType: [
+                    { name: 'Mobile', value: 55, color: '#DC143C' },
+                    { name: 'Desktop', value: 35, color: '#8B0000' },
+                    { name: 'Tablet', value: 10, color: '#FF6B6B' }
+                ]
+            };
+            return data[dimension] || data.platform;
+        }
+
+        function generatePacingData() {
+            const days = Array.from({ length: 31 }, (_, i) => i + 1);
+            return days.map(day => ({
+                day,
+                planned: Math.round(3.33 * day),
+                actual: Math.round((3.33 * day) * (0.85 + Math.random() * 0.3))
+            }));
+        }
+
+        function generateDeliveryTableData() {
+            return [
+                {
+                    campaign: 'Brand Awareness Q4',
+                    platform: 'Google Ads',
+                    objective: 'Impressions',
+                    budget: 50000,
+                    spend: 42150,
+                    impressions: 2850000,
+                    clicks: 19250,
+                    ctr: 0.68,
+                    cpm: 14.79,
+                    status: 'Active',
+                    pacing: 84.3
+                },
+                {
+                    campaign: 'Lead Generation EU',
+                    platform: 'Facebook',
+                    objective: 'Leads',
+                    budget: 35000,
+                    spend: 31200,
+                    impressions: 1920000,
+                    clicks: 15600,
+                    ctr: 0.81,
+                    cpm: 16.25,
+                    status: 'Active',
+                    pacing: 89.1
+                },
+                {
+                    campaign: 'Product Launch UK',
+                    platform: 'LinkedIn',
+                    objective: 'Conversions',
+                    budget: 25000,
+                    spend: 18750,
+                    impressions: 890000,
+                    clicks: 8900,
+                    ctr: 1.0,
+                    cpm: 21.07,
+                    status: 'Active',
+                    pacing: 75.0
+                },
+                {
+                    campaign: 'Retargeting Campaign',
+                    platform: 'Twitter',
+                    objective: 'Clicks',
+                    budget: 15000,
+                    spend: 14250,
+                    impressions: 750000,
+                    clicks: 12000,
+                    ctr: 1.6,
+                    cpm: 11.88,
+                    status: 'Paused',
+                    pacing: 95.0
+                }
+            ];
+        }
+
+        // Chart initialization and update functions
+        function initializeCharts() {
+            initializeUpperCharts();
+            initializeMidCharts();
+            initializeLowerCharts();
+        }
+
+        function initializeUpperCharts() {
+            // Upper Funnel Trend Chart
+            const upperCanvas = document.getElementById('upper-trend-chart');
+            if (upperCanvas) {
+                updateUpperChart();
+            }
+
+            // Upper Pacing Chart
+            const upperPacingCanvas = document.getElementById('upper-pacing-chart');
+            if (upperPacingCanvas) {
+                const pacingData = generatePacingData();
+                charts.upperPacing = new Chart(upperPacingCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: pacingData.map(d => d.day),
+                        datasets: [
+                            {
+                                label: 'Planned',
+                                data: pacingData.map(d => d.planned),
+                                borderColor: '#6B7280',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Actual',
+                                data: pacingData.map(d => d.actual),
+                                borderColor: '#DC143C',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Upper Distribution Chart
+            updateUpperDistribution();
+
+            // Upper Table
+            updateUpperTable();
+        }
+
+        function updateUpperChart() {
+            const canvas = document.getElementById('upper-trend-chart');
+            if (!canvas) return;
+
+            const period = document.getElementById('upper-period-select').value;
+            const metric1 = document.getElementById('upper-metric1-select').value;
+            const metric2 = document.getElementById('upper-metric2-select').value;
+            const chart1Type = document.getElementById('upper-chart1-type').value;
+            const chart2Type = document.getElementById('upper-chart2-type').value;
+
+            const data = generateTrendData(50000, 0.3, period);
+
+            if (charts.upperTrend) {
+                charts.upperTrend.destroy();
+            }
+
+            const metricLabels = {
+                spend: 'Spend (€)',
+                impressions: 'Impressions',
+                clicks: 'Clicks',
+                cpm: 'CPM (€)',
+                ctr: 'CTR (%)',
+                thruplay: 'ThruPlay (%)',
+                completedView: 'Completed View (%)'
+            };
+
+            charts.upperTrend = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [
+                        {
+                            label: metricLabels[metric1],
+                            data: data.map(d => d[metric1]),
+                            backgroundColor: chart1Type === 'bar' ? '#DC143C' : 'transparent',
+                            borderColor: '#DC143C',
+                            type: chart1Type,
+                            yAxisID: 'y',
+                            order: chart1Type === 'line' ? 1 : 2
+                        },
+                        {
+                            label: metricLabels[metric2],
+                            data: data.map(d => d[metric2]),
+                            backgroundColor: chart2Type === 'bar' ? '#2563EB' : 'transparent',
+                            borderColor: '#2563EB',
+                            type: chart2Type,
+                            yAxisID: 'y1',
+                            borderDash: chart2Type === 'line' ? [5, 5] : [],
+                            order: chart2Type === 'line' ? 1 : 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left'
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateUpperDistribution() {
+            const canvas = document.getElementById('upper-distribution-chart');
+            if (!canvas) return;
+
+            const dimension = document.getElementById('upper-distribution-select').value;
+            const data = generateDistributionData(dimension);
+
+            if (charts.upperDistribution) {
+                charts.upperDistribution.destroy();
+            }
+
+            charts.upperDistribution = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateUpperTable() {
+            const tableData = generateDeliveryTableData();
+            const viewType = document.getElementById('upper-table-view')?.value || 'default';
+            
+            const columns = {
+                default: ['campaign', 'platform', 'budget', 'spend', 'impressions', 'clicks', 'ctr', 'status', 'pacing'],
+                budget: ['campaign', 'platform', 'objective', 'budget', 'spend', 'pacing'],
+                performance: ['campaign', 'impressions', 'clicks', 'ctr', 'cpm'],
+                all: ['campaign', 'platform', 'objective', 'budget', 'spend', 'impressions', 'clicks', 'ctr', 'cpm', 'status', 'pacing']
+            };
+
+            const selectedColumns = columns[viewType];
+            const columnLabels = {
+                campaign: 'Campaign',
+                platform: 'Platform',
+                objective: 'Objective',
+                budget: 'Budget',
+                spend: 'Spend',
+                impressions: 'Impressions',
+                clicks: 'Clicks',
+                ctr: 'CTR',
+                cpm: 'CPM',
+                status: 'Status',
+                pacing: 'Pacing'
+            };
+
+            // Build table header
+            const thead = document.getElementById('upper-table-head');
+            if (thead) {
+                thead.innerHTML = '<tr>' + selectedColumns.map(col => 
+                    `<th onclick="sortTable('upper', '${col}')">${columnLabels[col]} <span class="sort-indicator"></span></th>`
+                ).join('') + '</tr>';
+            }
+
+            // Build table body
+            const tbody = document.getElementById('upper-table-body');
+            if (tbody) {
+                tbody.innerHTML = tableData.map(row => {
+                    return '<tr>' + selectedColumns.map(col => {
+                        let value = row[col];
+                        let formatted = value;
+                        
+                        if (col === 'budget' || col === 'spend') {
+                            formatted = `€${value.toLocaleString()}`;
+                        } else if (col === 'impressions' || col === 'clicks') {
+                            formatted = value.toLocaleString();
+                        } else if (col === 'ctr' || col === 'pacing') {
+                            formatted = `${value}%`;
+                        } else if (col === 'cpm') {
+                            formatted = `€${value}`;
+                        }
+
+                        if (col === 'status') {
+                            const statusClass = value.toLowerCase() === 'active' ? 'status-active' : 'status-paused';
+                            return `<td><span class="status-badge ${statusClass}">${value}</span></td>`;
+                        } else if (col === 'pacing') {
+                            const pacingClass = value >= 90 ? 'pacing-good' : value >= 70 ? 'pacing-warning' : 'pacing-bad';
+                            return `<td><span class="pacing-value ${pacingClass}">${formatted}</span></td>`;
+                        } else {
+                            return `<td>${formatted}</td>`;
+                        }
+                    }).join('') + '</tr>';
+                }).join('');
+            }
+        }
+
+        function initializeMidCharts() {
+            // Mid Funnel Trend Chart
+            updateMidChart();
+
+            // Mid Pacing Chart
+            const midPacingCanvas = document.getElementById('mid-pacing-chart');
+            if (midPacingCanvas) {
+                const pacingData = generatePacingData();
+                charts.midPacing = new Chart(midPacingCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: pacingData.map(d => d.day),
+                        datasets: [
+                            {
+                                label: 'Planned',
+                                data: pacingData.map(d => d.planned),
+                                borderColor: '#6B7280',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Actual',
+                                data: pacingData.map(d => d.actual),
+                                borderColor: '#DC143C',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Mid Distribution Chart
+            updateMidDistribution();
+
+            // Mid Table
+            const tableData = generateDeliveryTableData();
+            const thead = document.getElementById('mid-table-head');
+            const tbody = document.getElementById('mid-table-body');
+            
+            if (thead && tbody) {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Campaign</th>
+                        <th>Platform</th>
+                        <th>Budget</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>Status</th>
+                        <th>Pacing</th>
+                    </tr>
+                `;
+                
+                tbody.innerHTML = tableData.map(row => `
+                    <tr>
+                        <td>${row.campaign}</td>
+                        <td>${row.platform}</td>
+                        <td>€${row.budget.toLocaleString()}</td>
+                        <td>€${row.spend.toLocaleString()}</td>
+                        <td>${row.ctr}%</td>
+                        <td><span class="status-badge ${row.status.toLowerCase() === 'active' ? 'status-active' : 'status-paused'}">${row.status}</span></td>
+                        <td><span class="pacing-value ${row.pacing >= 90 ? 'pacing-good' : row.pacing >= 70 ? 'pacing-warning' : 'pacing-bad'}">${row.pacing}%</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updateMidChart() {
+            const canvas = document.getElementById('mid-trend-chart');
+            if (!canvas) return;
+
+            const period = document.getElementById('mid-period-select')?.value || 'months';
+            const metric1 = document.getElementById('mid-metric1-select')?.value || 'landingViews';
+            const metric2 = document.getElementById('mid-metric2-select')?.value || 'contentViews';
+
+            const data = generateTrendData(50000, 0.3, period);
+
+            if (charts.midTrend) {
+                charts.midTrend.destroy();
+            }
+
+            const metricLabels = {
+                landingViews: 'Landing Page Views',
+                contentViews: 'Content Views',
+                engagements: 'Engagements',
+                cpe: 'CPE (€)',
+                leads: 'Leads',
+                cpl: 'CPL (€)'
+            };
+
+            charts.midTrend = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [
+                        {
+                            label: metricLabels[metric1],
+                            data: data.map(d => d[metric1]),
+                            backgroundColor: '#DC143C',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: metricLabels[metric2],
+                            data: data.map(d => d[metric2]),
+                            borderColor: '#2563EB',
+                            type: 'line',
+                            yAxisID: 'y1',
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left'
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMidDistribution() {
+            const canvas = document.getElementById('mid-distribution-chart');
+            if (!canvas) return;
+
+            const dimension = document.getElementById('mid-distribution-select')?.value || 'platform';
+            const data = generateDistributionData(dimension);
+
+            if (charts.midDistribution) {
+                charts.midDistribution.destroy();
+            }
+
+            charts.midDistribution = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeLowerCharts() {
+            // Lower Funnel Trend Chart
+            updateLowerChart();
+
+            // Lower Pacing Chart
+            const lowerPacingCanvas = document.getElementById('lower-pacing-chart');
+            if (lowerPacingCanvas) {
+                const pacingData = generatePacingData();
+                charts.lowerPacing = new Chart(lowerPacingCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: pacingData.map(d => d.day),
+                        datasets: [
+                            {
+                                label: 'Planned',
+                                data: pacingData.map(d => d.planned),
+                                borderColor: '#6B7280',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Actual',
+                                data: pacingData.map(d => d.actual),
+                                borderColor: '#DC143C',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Lower Distribution Chart
+            updateLowerDistribution();
+
+            // Lower Table
+            const tableData = generateDeliveryTableData();
+            const thead = document.getElementById('lower-table-head');
+            const tbody = document.getElementById('lower-table-body');
+            
+            if (thead && tbody) {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Campaign</th>
+                        <th>Platform</th>
+                        <th>Budget</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>Status</th>
+                        <th>Pacing</th>
+                    </tr>
+                `;
+                
+                tbody.innerHTML = tableData.map(row => `
+                    <tr>
+                        <td>${row.campaign}</td>
+                        <td>${row.platform}</td>
+                        <td>€${row.budget.toLocaleString()}</td>
+                        <td>€${row.spend.toLocaleString()}</td>
+                        <td>${row.ctr}%</td>
+                        <td><span class="status-badge ${row.status.toLowerCase() === 'active' ? 'status-active' : 'status-paused'}">${row.status}</span></td>
+                        <td><span class="pacing-value ${row.pacing >= 90 ? 'pacing-good' : row.pacing >= 70 ? 'pacing-warning' : 'pacing-bad'}">${row.pacing}%</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updateLowerChart() {
+            const canvas = document.getElementById('lower-trend-chart');
+            if (!canvas) return;
+
+            const period = document.getElementById('lower-period-select')?.value || 'months';
+            const metric1 = document.getElementById('lower-metric1-select')?.value || 'a2c';
+            const metric2 = document.getElementById('lower-metric2-select')?.value || 'cpa2c';
+
+            const data = generateTrendData(50000, 0.3, period);
+
+            if (charts.lowerTrend) {
+                charts.lowerTrend.destroy();
+            }
+
+            const metricLabels = {
+                a2c: 'A2C',
+                cpa2c: 'CPA2C (€)',
+                purchases: 'Purchases',
+                revenue: 'Revenue (€)',
+                roas: 'ROAS'
+            };
+
+            charts.lowerTrend = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [
+                        {
+                            label: metricLabels[metric1],
+                            data: data.map(d => d[metric1]),
+                            backgroundColor: '#DC143C',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: metricLabels[metric2],
+                            data: data.map(d => d[metric2]),
+                            borderColor: '#2563EB',
+                            type: 'line',
+                            yAxisID: 'y1',
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left'
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLowerDistribution() {
+            const canvas = document.getElementById('lower-distribution-chart');
+            if (!canvas) return;
+
+            const dimension = document.getElementById('lower-distribution-select')?.value || 'platform';
+            const data = generateDistributionData(dimension);
+
+            if (charts.lowerDistribution) {
+                charts.lowerDistribution.destroy();
+            }
+
+            charts.lowerDistribution = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-button').classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            currentTab = tabName;
+        }
+
+        // Table sorting
+        function sortTable(tablePrefix, field) {
+            if (sortField === field) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDirection = 'asc';
+            }
+
+            if (tablePrefix === 'upper') {
+                updateUpperTable();
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        // Make functions globally available
+        window.switchTab = switchTab;
+        window.sortTable = sortTable;
+        window.updateUpperChart = updateUpperChart;
+        window.updateUpperDistribution = updateUpperDistribution;
+        window.updateUpperTable = updateUpperTable;
+        window.updateMidChart = updateMidChart;
+        window.updateMidDistribution = updateMidDistribution;
+        window.updateLowerChart = updateLowerChart;
+        window.updateLowerDistribution = updateLowerDistribution;
+    </script>
+</body>
+</html>

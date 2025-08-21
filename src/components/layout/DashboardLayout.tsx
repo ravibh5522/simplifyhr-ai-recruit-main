@@ -68,15 +68,12 @@ const DashboardLayout = ({ children, title, actions }: DashboardLayoutProps) => 
           <div className="flex h-16 items-center justify-between">
             {/* Logo and Title */}
             <div className="flex items-center space-x-4">
-              <div 
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg border border-transparent hover:border-blue-200 hover:bg-blue-50/50 transition-all duration-200"
-              >
+              <div className="flex items-center space-x-2">
                 <div className="p-1 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg">
                   <img 
                     src="/lovable-uploads/9bf28cca-ee40-48d0-a419-8360a0879759.png" 
                     alt="SimplifyHiring Logo" 
-                    className="w-8 h-8 rounded-sm"
+                    className="w-6 h-6 rounded-sm"
                   />
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">SimplifyHiring</span>
@@ -85,9 +82,22 @@ const DashboardLayout = ({ children, title, actions }: DashboardLayoutProps) => 
               <h1 className="text-xl font-semibold text-foreground">{title}</h1>
             </div>
 
-            {/* Right side - Actions and User Menu */}
+            {/* Right side - Company Logo, Actions and User Menu */}
             <div className="flex items-center space-x-4">
               {actions}
+              
+              {/* Company Logo - Clickable to navigate to dashboard */}
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/dashboard')}
+                className="p-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-lg transition-all duration-200"
+              >
+                <img 
+                  src="/lovable-uploads/9bf28cca-ee40-48d0-a419-8360a0879759.png" 
+                  alt="Company Logo" 
+                  className="w-8 h-8 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
+                />
+              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -41,7 +41,7 @@ interface VendorCosts {
 const CostROIAnalytics = () => {
   const [metrics, setMetrics] = useState<CostMetrics | null>(null);
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown[]>([]);
-  const [roiTrends, setROITrends] = useState<ROITrend[]>([]);
+  const [roiTrends, setRoiTrends] = useState<ROITrend[]>([]);
   const [vendorCosts, setVendorCosts] = useState<VendorCosts[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -78,165 +78,166 @@ const CostROIAnalytics = () => {
       const vendors = vendorsResult.data || [];
 
       const hiredApplications = applications.filter((app: any) => app.status === 'hired');
-      const totalHires = Math.max(hiredApplications.length, 1); // Minimum 1 for placeholder calculations
+      const totalHires = hiredApplications.length;
 
-      // If no data available, use placeholder metrics
-      if (jobs.length === 0 && applications.length === 0) {
-        const placeholderMetrics: CostMetrics = {
-          totalRecruitmentCost: 15000000, // IDR 15M placeholder
-          averageCostPerHire: 2500000, // IDR 2.5M placeholder  
-          costPerApplication: 150000, // IDR 150k placeholder
-          vendorCommissions: 7500000, // IDR 7.5M placeholder
-          monthlyROI: 25.5, // 25.5% placeholder ROI
-          costSavings: 3000000, // IDR 3M placeholder savings
-          budgetUtilization: 75.2 // 75.2% placeholder utilization
+      // Use placeholder data if no real data exists
+      const hasRealData = jobs.length > 0 && applications.length > 0;
+      
+      let costMetrics: CostMetrics;
+      let costBreakdown: CostBreakdown[];
+      let roiTrendData: ROITrend[];
+
+      if (hasRealData) {
+        // Calculate real metrics
+        // Calculate total salary paid (estimated from hired applications and job salary ranges)
+        const totalSalaryPaid = hiredApplications.reduce((sum: number, app: any) => {
+          // Since we don't have direct salary data, estimate from related job salary ranges
+          const estimatedSalary = jobs.find((job: any) => job.id === app.job_id)?.salary_max || 50000000; // IDR 50M default
+          return sum + estimatedSalary;
+        }, 0);
+        
+        // Estimate recruitment costs (platform fees, vendor commissions, etc.)
+        const avgVendorCommission = vendors.length > 0 
+          ? vendors.reduce((sum: number, v: any) => sum + (v.commission_rate || 0), 0) / vendors.length 
+          : 15; // 15% default commission
+        
+        const vendorCommissions = totalSalaryPaid * (avgVendorCommission / 100);
+        const platformCosts = totalHires * 500000; // Estimated IDR 500k per hire in platform costs
+        const totalRecruitmentCost = vendorCommissions + platformCosts;
+        
+        const averageCostPerHire = totalHires > 0 ? totalRecruitmentCost / totalHires : 0;
+        const costPerApplication = applications.length > 0 ? totalRecruitmentCost / applications.length : 0;
+        
+        // Calculate ROI (simplified)
+        const estimatedValuePerHire = 5000000; // IDR 5M estimated value per successful hire
+        const totalValue = totalHires * estimatedValuePerHire;
+        const monthlyROI = totalRecruitmentCost > 0 ? ((totalValue - totalRecruitmentCost) / totalRecruitmentCost) * 100 : 0;
+        
+        // Estimate cost savings vs traditional recruitment
+        const traditionalCostPerHire = 3000000; // IDR 3M traditional cost per hire
+        const costSavings = totalHires * traditionalCostPerHire - totalRecruitmentCost;
+        
+        // Budget utilization (based on job salary ranges)
+        const totalBudget = jobs.reduce((sum: number, job: any) => {
+          return sum + Math.max(job.salary_max || 0, 0);
+        }, 0);
+        const budgetUtilization = totalBudget > 0 ? (totalSalaryPaid / totalBudget) * 100 : 0;
+
+        costMetrics = {
+          totalRecruitmentCost,
+          averageCostPerHire,
+          costPerApplication,
+          vendorCommissions,
+          monthlyROI,
+          costSavings,
+          budgetUtilization
         };
-        
-        setMetrics(placeholderMetrics);
-        
-        // Set placeholder breakdown
-        const placeholderBreakdown: CostBreakdown[] = [
-          { category: 'Vendor Commissions', amount: 7500000, percentage: 50 },
-          { category: 'Platform Costs', amount: 4500000, percentage: 30 },
-          { category: 'AI Processing', amount: 1500000, percentage: 10 },
-          { category: 'Other Costs', amount: 1500000, percentage: 10 }
+
+        // Cost breakdown
+        costBreakdown = [
+          {
+            category: 'Vendor Commissions',
+            amount: vendorCommissions,
+            percentage: totalRecruitmentCost > 0 ? (vendorCommissions / totalRecruitmentCost) * 100 : 0
+          },
+          {
+            category: 'Platform Costs',
+            amount: platformCosts,
+            percentage: totalRecruitmentCost > 0 ? (platformCosts / totalRecruitmentCost) * 100 : 0
+          },
+          {
+            category: 'Additional Services',
+            amount: totalHires * 100000, // IDR 100k per hire for additional services
+            percentage: totalRecruitmentCost > 0 ? ((totalHires * 100000) / totalRecruitmentCost) * 100 : 0
+          }
         ];
-        setCostBreakdown(placeholderBreakdown);
-        
-        // Set placeholder ROI trends
-        const placeholderROI: ROITrend[] = [];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-        months.forEach((month, index) => {
-          placeholderROI.push({
-            month,
-            cost: 2000000 + (index * 100000),
-            hires: 3 + (index % 2),
-            roi: 20 + (index * 2),
-            savings: 1000000 + (index * 150000)
+
+        // ROI trends (last 6 months) - Real data
+        roiTrendData = [];
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+          const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          
+          // Use hiredApplications instead of acceptedOffers
+          const monthHires = hiredApplications.filter(app => {
+            const hireDate = new Date(app.applied_at); // Using applied_at as proxy for hire date
+            return hireDate >= monthStart && hireDate <= monthEnd;
           });
-        });
-        setROITrends(placeholderROI);
+          
+          const monthlyHires = monthHires.length;
+          const monthlyCost = monthlyHires * averageCostPerHire;
+          const monthlyValue = monthlyHires * estimatedValuePerHire;
+          const monthlyROI = monthlyCost > 0 ? ((monthlyValue - monthlyCost) / monthlyCost) * 100 : 0;
+          const monthlySavings = monthlyHires * traditionalCostPerHire - monthlyCost;
+          
+          roiTrendData.push({
+            month: date.toLocaleDateString('en-US', { month: 'short' }),
+            cost: monthlyCost,
+            hires: monthlyHires,
+            roi: monthlyROI,
+            savings: monthlySavings
+          });
+        }
+      } else {
+        // Placeholder data when no real data is available
+        console.log('No real data available, using placeholder data for Cost ROI Analytics');
         
-        // Set placeholder vendor costs
-        const placeholderVendors: VendorCosts[] = [
-          { vendor: 'Tech Recruiters Co', totalCost: 5000000, hires: 8, costPerHire: 625000, performance: 85 },
-          { vendor: 'Talent Solutions Ltd', totalCost: 3000000, hires: 5, costPerHire: 600000, performance: 78 },
-          { vendor: 'HR Partners Inc', totalCost: 2500000, hires: 4, costPerHire: 625000, performance: 92 }
+        costMetrics = {
+          totalRecruitmentCost: 15000000, // IDR 15M placeholder
+          averageCostPerHire: 2500000, // IDR 2.5M placeholder
+          costPerApplication: 125000, // IDR 125k placeholder
+          vendorCommissions: 7500000, // IDR 7.5M placeholder
+          monthlyROI: 180, // 180% placeholder ROI
+          costSavings: 3000000, // IDR 3M placeholder savings
+          budgetUtilization: 75 // 75% placeholder utilization
+        };
+
+        costBreakdown = [
+          {
+            category: 'Vendor Commissions',
+            amount: 7500000,
+            percentage: 50
+          },
+          {
+            category: 'Platform Costs',
+            amount: 5000000,
+            percentage: 33.3
+          },
+          {
+            category: 'Additional Services',
+            amount: 2500000,
+            percentage: 16.7
+          }
         ];
-        setVendorCosts(placeholderVendors);
+
+        // Placeholder ROI trends (last 6 months)
+        const placeholderMonths = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+        const baseCost = 2000000;
+        const baseHires = 3;
         
-        setLoading(false);
-        return;
+        roiTrendData = placeholderMonths.map((month, index) => {
+          const variance = Math.sin(index * 0.5) * 0.3 + 1; // Create some realistic variance
+          return {
+            month,
+            cost: Math.round(baseCost * variance),
+            hires: Math.round(baseHires * variance),
+            roi: Math.round(150 + (variance - 1) * 50), // ROI between 100-200%
+            savings: Math.round(1000000 * variance)
+          };
+        });
       }
-
-      // Calculate metrics
-      // Calculate total salary paid (estimated from hired applications and job salary ranges)
-      const totalSalaryPaid = hiredApplications.reduce((sum: number, app: any) => {
-        // Since we don't have direct salary data, estimate from related job salary ranges
-        const estimatedSalary = jobs.find((job: any) => job.id === app.job_id)?.salary_max || 50000000; // IDR 50M default
-        return sum + estimatedSalary;
-      }, 0);
-      
-      // Estimate recruitment costs (platform fees, vendor commissions, etc.)
-      const avgVendorCommission = vendors.length > 0 
-        ? vendors.reduce((sum: number, v: any) => sum + (v.commission_rate || 0), 0) / vendors.length 
-        : 15; // 15% default commission
-      
-      const vendorCommissions = totalSalaryPaid * (avgVendorCommission / 100);
-      const platformCosts = totalHires * 500000; // Estimated IDR 500k per hire in platform costs
-      const totalRecruitmentCost = vendorCommissions + platformCosts;
-      
-      const averageCostPerHire = totalHires > 0 ? totalRecruitmentCost / totalHires : 0;
-      const costPerApplication = applications.length > 0 ? totalRecruitmentCost / applications.length : 0;
-      
-      // Calculate ROI (simplified)
-      const estimatedValuePerHire = 5000000; // IDR 5M estimated value per successful hire
-      const totalValue = totalHires * estimatedValuePerHire;
-      const monthlyROI = totalRecruitmentCost > 0 ? ((totalValue - totalRecruitmentCost) / totalRecruitmentCost) * 100 : 0;
-      
-      // Estimate cost savings vs traditional recruitment
-      const traditionalCostPerHire = 3000000; // IDR 3M traditional cost per hire
-      const costSavings = totalHires * traditionalCostPerHire - totalRecruitmentCost;
-      
-      // Budget utilization (based on job salary ranges)
-      const totalBudget = jobs.reduce((sum: number, job: any) => {
-        return sum + Math.max(job.salary_max || 0, 0);
-      }, 0);
-      const budgetUtilization = totalBudget > 0 ? (totalSalaryPaid / totalBudget) * 100 : 0;
-
-      const costMetrics: CostMetrics = {
-        totalRecruitmentCost,
-        averageCostPerHire,
-        costPerApplication,
-        vendorCommissions,
-        monthlyROI,
-        costSavings,
-        budgetUtilization
-      };
 
       setMetrics(costMetrics);
-
-      // Cost breakdown
-      const breakdown: CostBreakdown[] = [
-        {
-          category: 'Vendor Commissions',
-          amount: vendorCommissions,
-          percentage: totalRecruitmentCost > 0 ? (vendorCommissions / totalRecruitmentCost) * 100 : 0
-        },
-        {
-          category: 'Platform Costs',
-          amount: platformCosts,
-          percentage: totalRecruitmentCost > 0 ? (platformCosts / totalRecruitmentCost) * 100 : 0
-        },
-        {
-          category: 'AI Processing',
-          amount: totalHires * 50000, // IDR 50k per hire for AI processing
-          percentage: totalRecruitmentCost > 0 ? ((totalHires * 50000) / totalRecruitmentCost) * 100 : 0
-        },
-        {
-          category: 'Other Costs',
-          amount: totalHires * 100000, // IDR 100k misc costs
-          percentage: totalRecruitmentCost > 0 ? ((totalHires * 100000) / totalRecruitmentCost) * 100 : 0
-        }
-      ];
-
-      setCostBreakdown(breakdown);
-
-      // ROI trends (last 6 months)
-      const roiTrendData: ROITrend[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
-        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        
-        // Use hiredApplications instead of acceptedOffers
-        const monthHires = hiredApplications.filter(app => {
-          const appDate = new Date(app.applied_at || new Date());
-          return appDate >= monthStart && appDate <= monthEnd;
-        });
-        
-        const monthlyHires = monthHires.length;
-        const monthlyCost = monthlyHires * averageCostPerHire;
-        const monthlyValue = monthlyHires * estimatedValuePerHire;
-        const monthlyROI = monthlyCost > 0 ? ((monthlyValue - monthlyCost) / monthlyCost) * 100 : 0;
-        const monthlySavings = monthlyHires * traditionalCostPerHire - monthlyCost;
-        
-        roiTrendData.push({
-          month: date.toLocaleDateString('en-US', { month: 'short' }),
-          cost: monthlyCost,
-          hires: monthlyHires,
-          roi: monthlyROI,
-          savings: monthlySavings
-        });
-      }
-
-      setROITrends(roiTrendData);
+      setCostBreakdown(costBreakdown);
+      setRoiTrends(roiTrendData);
 
       // Vendor cost analysis
       const vendorCostData = vendors.slice(0, 5).map((vendor, index) => {
+        const avgCostPerHire = costMetrics.averageCostPerHire;
         const vendorHires = Math.floor(Math.random() * 10) + 1; // Simplified for demo
-        const vendorTotalCost = vendorHires * averageCostPerHire * ((vendor.commission_rate || 15) / 15);
+        const vendorTotalCost = vendorHires * avgCostPerHire * ((vendor.commission_rate || 15) / 15);
         
         return {
           vendor: vendor.vendor_name || `Vendor ${index + 1}`,
@@ -251,10 +252,43 @@ const CostROIAnalytics = () => {
 
     } catch (error) {
       console.error('Error fetching cost analytics data:', error);
+      
+      // Set comprehensive placeholder data on error
+      setMetrics({
+        totalRecruitmentCost: 10000000,
+        averageCostPerHire: 2000000,
+        costPerApplication: 100000,
+        vendorCommissions: 5000000,
+        monthlyROI: 150,
+        costSavings: 2000000,
+        budgetUtilization: 65
+      });
+      
+      setCostBreakdown([
+        { category: 'Vendor Commissions', amount: 5000000, percentage: 50 },
+        { category: 'Platform Costs', amount: 3000000, percentage: 30 },
+        { category: 'Additional Services', amount: 2000000, percentage: 20 }
+      ]);
+      
+      const placeholderMonths = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+      setRoiTrends(placeholderMonths.map((month, index) => ({
+        month,
+        cost: 1500000 + (index * 200000),
+        hires: 2 + Math.floor(index / 2),
+        roi: 140 + (index * 10),
+        savings: 800000 + (index * 150000)
+      })));
+      
+      setVendorCosts([
+        { vendor: 'Sample Vendor A', totalCost: 4000000, hires: 2, costPerHire: 2000000, performance: 75 },
+        { vendor: 'Sample Vendor B', totalCost: 6000000, hires: 3, costPerHire: 2000000, performance: 82 },
+        { vendor: 'Sample Vendor C', totalCost: 8000000, hires: 4, costPerHire: 2000000, performance: 90 }
+      ]);
+      
       toast({
-        title: "Error",
-        description: "Failed to load cost analytics data",
-        variant: "destructive"
+        title: "Using Sample Data",
+        description: "Displaying placeholder cost analytics data",
+        variant: "default"
       });
     } finally {
       setLoading(false);

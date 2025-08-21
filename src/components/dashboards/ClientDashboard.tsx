@@ -29,6 +29,7 @@ import OfferTemplateManager from '@/components/forms/OfferTemplateManager';
 import { SelectedCandidatesManager } from '@/components/SelectedCandidatesManager';
 import { OfferWorkflowManager } from '@/components/OfferWorkflowManager';
 import AdvancedAnalyticsDashboard from '@/components/analytics/AdvancedAnalyticsDashboard';
+import InterviewSchedulingModal from '@/components/scheduling/InterviewSchedulingModal';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -332,6 +333,7 @@ const fetchDashboardData = async () => {
       <AddVendorModal onVendorAdded={fetchDashboardData} />
       <OfferTemplateManager onTemplateUploaded={fetchDashboardData} />
       <CreateJobModal onJobCreated={fetchDashboardData} />
+      <InterviewSchedulingModal onScheduled={fetchDashboardData} />
     </div>
   );
 
